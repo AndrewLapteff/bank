@@ -4,7 +4,7 @@ CREATE TABLE "Users" (
     "username" TEXT NOT NULL,
     "phoneNumber" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "balance" INTEGER NOT NULL,
+    "balance" DECIMAL NOT NULL,
     "createdAt" TIMESTAMP NOT NULL,
 
     CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
@@ -16,8 +16,10 @@ CREATE TABLE "Transactions" (
     "senderId" INTEGER NOT NULL,
     "receiverId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP NOT NULL,
-    "amount" INTEGER NOT NULL,
+    "totalAmount" DECIMAL NOT NULL,
+    "amount" DECIMAL NOT NULL,
     "message" TEXT NOT NULL,
+    "commission" DECIMAL NOT NULL,
     "accepted" BOOLEAN NOT NULL,
 
     CONSTRAINT "Transactions_pkey" PRIMARY KEY ("id")

@@ -14,21 +14,24 @@ model Users {
   id               Int            @id @default(autoincrement())
   username         String
   phoneNumber      String         @unique
+  cardNumber       Int            @unique @default(0000000000000000)
   password         String
-  balance          Int
+  balance          Decimal
   createdAt        DateTime       @default(dbgenerated()) @db.Timestamp()
   sentTransactions Transactions[] @relation(name: "senderId")
   Transactions     Transactions[] @relation(name: "receiverId")
 }
 
 model Transactions {
-  id         Int      @id @default(autoincrement())
-  sender     Users    @relation(name: "senderId", fields: [senderId], references: [id])
-  senderId   Int
-  receiver   Users    @relation(name: "receiverId", fields: [receiverId], references: [id])
-  receiverId Int
-  createdAt  DateTime @db.Timestamp()
-  amount     Int
-  message    String
-  accepted   Boolean
+  id          Int      @id @default(autoincrement())
+  sender      Users    @relation(name: "senderId", fields: [senderId], references: [id])
+  senderId    Int
+  receiver    Users    @relation(name: "receiverId", fields: [receiverId], references: [id])
+  receiverId  Int
+  createdAt   DateTime @db.Timestamp()
+  totalAmount Decimal
+  amount      Decimal
+  commission  Decimal
+  message     String
+  accepted    Boolean
 }

@@ -14,6 +14,7 @@ export class UserService {
       data: {
         username: this.correctFullName(user.username),
         phoneNumber: user.phoneNumber,
+        cardNumber: this.generateSequentialNumber(),
         password: await this.createPassword(user.password),
         balance: 0,
         createdAt: new Date()
@@ -26,7 +27,7 @@ export class UserService {
     const currentUser: UserType = await client.users.findFirst({ where: { phoneNumber: userCredentials.phoneNumber } })
     if (!currentUser)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND)
-    const isPasswordCorrect = await this.verifyPassword(userCredentials.password, currentUser.password)
+    const isPasswordCorrect: boolean = await this.verifyPassword(userCredentials.password, currentUser.password)
     if (!isPasswordCorrect)
       throw new HttpException('Password incorrect', HttpStatus.FORBIDDEN)
     currentUser.token = await this.createJwtToken(currentUser)
@@ -69,5 +70,16 @@ export class UserService {
     delete user.password
     delete user.createdAt
     return { user }
+  }
+
+  generateSequentialNumber(): number {
+    var randomNumber = ''
+
+    for (var i = 0; i < 16; i++) {
+      var digit = Math.floor(Math.random() * 10)
+      randomNumber += digit
+    }
+
+    return +randomNumber
   }
 }
