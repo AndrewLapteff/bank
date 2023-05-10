@@ -13,6 +13,7 @@ export class UserController {
   @Post('registration')
   @UsePipes(new ValidationPipe())
   createUser(@Body('user') user: CreateUserDto): Promise<UserType> {
+    console.log(user)
     return this.userService.createUser(user)
   }
   @Post('login')
