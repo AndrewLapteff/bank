@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common'
 import { Request } from 'express'
 import { verify } from 'jsonwebtoken'
-import { Observable, retry } from 'rxjs'
+import { Observable } from 'rxjs'
 
 @Injectable()
 export class AuthGuard implements CanActivate {

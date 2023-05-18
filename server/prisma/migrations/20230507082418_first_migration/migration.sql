@@ -4,6 +4,7 @@ CREATE TABLE "Users" (
     "username" TEXT NOT NULL,
     "phoneNumber" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
     "balance" DECIMAL NOT NULL,
     "createdAt" TIMESTAMP NOT NULL,
 

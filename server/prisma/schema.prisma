@@ -16,6 +16,7 @@ model Users {
   phoneNumber      String         @unique
   cardNumber       Int            @unique @default(0000000000000000)
   password         String
+  token            String
   balance          Decimal
   createdAt        DateTime       @default(dbgenerated()) @db.Timestamp()
   sentTransactions Transactions[] @relation(name: "senderId")

@@ -3,15 +3,18 @@ import { Users } from '@prisma/client'
 import { CreateUserDto } from './dto/createUser.dto'
 import { hash, compare } from 'bcrypt'
 import { LoginUserDto } from './dto/loginUser.dto'
-import { sign } from 'jsonwebtoken'
+import { sign, verify } from 'jsonwebtoken'
 import { UserType } from './types/userType'
 import { client } from '../main'
+import { Request, Response } from 'express'
 
 @Injectable()
 export class UserService {
+
   async createUser(user: CreateUserDto): Promise<UserType> {
     const newUser: UserType = await client.users.create({
       data: {
+        token: '',
         username: this.correctFullName(user.username),
         phoneNumber: user.phoneNumber,
         cardNumber: this.generateSequentialNumber(),
@@ -23,35 +26,54 @@ export class UserService {
     return newUser
   }
 
-  async login(userCredentials: LoginUserDto): Promise<UserType> {
+  async login(userCredentials: LoginUserDto, request: Request, response: Response): Promise<Response> {
     const currentUser: UserType = await client.users.findFirst({ where: { phoneNumber: userCredentials.phoneNumber } })
     if (!currentUser)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND)
     const isPasswordCorrect: boolean = await this.verifyPassword(userCredentials.password, currentUser.password)
     if (!isPasswordCorrect)
       throw new HttpException('Password incorrect', HttpStatus.FORBIDDEN)
-    currentUser.token = await this.createJwtToken(currentUser)
-    return currentUser
+    const { accessToken, refreshToken } = await this.createJwtTokens(currentUser)
+    this.updateRefreshTokenInDB(refreshToken, userCredentials.phoneNumber)
+    response.cookie('token', refreshToken, { httpOnly: true, secure: true, maxAge: 2592000000 })
+    currentUser.token = accessToken
+    return response.send(this.buildUserResponse(currentUser))
   }
 
   async getCurrentUser(id: number): Promise<UserType> {
     const currentUser: UserType = await client.users.findFirst({ where: { id } })
-    currentUser.token = await this.createJwtToken(currentUser)
+    const { accessToken } = await this.createJwtTokens(currentUser)
+    currentUser.token = accessToken
     return currentUser
   }
 
-  correctFullName(fullname: string): string {
-    fullname = fullname.toLowerCase().trim()
-    let nameAndSurname = fullname.split(' ')
-    let result: string = ''
-    nameAndSurname.forEach((credential, idx) => {
-      let isSpace = ' '
-      if (idx === 1)
-        isSpace = ''
-      let chars = credential.split('')
-      result += chars[ 0 ].toUpperCase() + credential.slice(1) + isSpace
-    })
-    return result
+  async createJwtTokens(user: Users): Promise<{ accessToken: string, refreshToken: string }> {
+    const accessToken = sign({ id: user.id, phoneNumber: user.phoneNumber, balance: user.balance, cardNumber: user.cardNumber, }, process.env.SECRET, { expiresIn: '30m' })
+    const refreshToken = sign({ id: user.id, phoneNumber: user.phoneNumber, balance: user.balance, cardNumber: user.cardNumber, }, process.env.SECRET, { expiresIn: '30d' })
+    return { accessToken, refreshToken }
+  }
+
+  async createNewAccessToken(req: Request): Promise<{ accessToken: string }> {
+    let refreshToken: string = req.headers.cookie
+    refreshToken = refreshToken.slice(6, 1000)
+    const user: Users = await client.users.findFirst({ where: { token: refreshToken } })
+    if (!user) {
+      throw new HttpException('Relogin please', HttpStatus.FORBIDDEN)
+    }
+    const accessToken = sign({ id: user.id, phoneNumber: user.phoneNumber, balance: user.balance, cardNumber: user.cardNumber, }, process.env.SECRET, { expiresIn: '30m' })
+    return { accessToken }
+  }
+
+  async updateRefreshTokenInDB(refreshToken: string, phoneNumber: string): Promise<void> {
+    await client.users.update({ where: { phoneNumber: phoneNumber }, data: { token: refreshToken } })
+  }
+
+  async verifyJwt(token: string): Promise<any> {
+    try {
+      return verify(token, process.env.SECRET)
+    } catch (error) {
+      throw new HttpException('Update access please', HttpStatus.FORBIDDEN)
+    }
   }
 
   createPassword(password: string): Promise<string> {
@@ -62,9 +84,6 @@ export class UserService {
     return compare(password, hash)
   }
 
-  async createJwtToken(user: Users): Promise<string> {
-    return sign({ id: user.id, phoneNumber: user.phoneNumber, password: user.password, }, process.env.SECRET)
-  }
 
   buildUserResponse(user: Users): { user: UserType } {
     delete user.password
@@ -82,4 +101,19 @@ export class UserService {
 
     return +randomNumber
   }
+
+  correctFullName(fullname: string): string {
+    fullname = fullname.toLowerCase().trim()
+    let nameAndSurname = fullname.split(' ')
+    let result: string = ''
+    nameAndSurname.forEach((credential, idx) => {
+      let isSpace = ' '
+      if (idx === 1)
+        isSpace = ''
+      let chars = credential.split('')
+      result += chars[ 0 ].toUpperCase() + credential.slice(1) + isSpace
+    })
+    return result
+  }
+
 }

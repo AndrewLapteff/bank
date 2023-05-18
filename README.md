@@ -3,7 +3,7 @@
 ##### Frontend
 
 - React
-- Redux
+- MobX
 
 ##### Backend
 

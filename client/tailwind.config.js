@@ -20,8 +20,14 @@ export default {
 
       '2xl': { 'min': '1536px' },
       // => @media (min-width: 1536px) { ... }
+    },
+    extend: {
+      colors: {
+        "bg-color": "#1B1B23"
+      }
     }
   },
+
   plugins: [],
 }
 

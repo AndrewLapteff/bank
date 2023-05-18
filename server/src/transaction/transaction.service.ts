@@ -6,7 +6,7 @@ import { TransactionResponse } from './types/transactionResponse.interface'
 import { TransactionsResponse } from './types/transactionsResponse.interface'
 import { UserService } from '@app/user/user.service'
 import { addMoneyDto } from './dto/addMoney.dto'
-import { Decimal } from '@prisma/client/runtime'
+import { Decimal } from '@prisma/client/runtime/library'
 
 @Injectable()
 export class TransactionService {
@@ -47,6 +47,9 @@ export class TransactionService {
   }
   async getAllReceiverTransactions(currentUserId: number): Promise<Transactions[]> {
     return await client.transactions.findMany({ where: { receiverId: currentUserId } })
+  }
+  async testGet() {
+    return client.transactions.findFirst({ where: { id: 1 } })
   }
   async createCommission(amount: number): Promise<{ amount: number, commission: number }> {
     let amountWithoutCommission = amount

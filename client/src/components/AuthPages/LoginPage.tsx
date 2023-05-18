@@ -1,58 +1,81 @@
-import axios from 'axios';
-import { ErrorMessage, Field, Form, Formik } from 'formik';
-import { useState } from 'react';
+import { ErrorMessage, Field, Form, Formik } from 'formik'
+import { useContext, useState } from 'react'
+import { AuthContext } from '../../App'
+import { AxiosError } from 'axios'
+import { IError } from '../../types/Error.interface'
+import { NavLink, NavigateFunction, useNavigate } from 'react-router-dom'
 
 const LoginPage = () => {
-  const [requestErrors, setRequestErrors] = useState([]);
+  const { auth } = useContext(AuthContext)
+  const [requestErrors, setRequestErrors] = useState<string[]>([])
   const [errorField, setErrorField] = useState({
     number: true,
     password: true,
-  });
+  })
+  const navigate: NavigateFunction = useNavigate()
 
-  const loginHandler = (phoneNumber: string, password: string) => {
-    const user = { user: { phoneNumber: '+38' + phoneNumber, password } };
-    axios
-      .post('http://localhost:3000/users/login', user)
-      .then((data) => {
-        setRequestErrors([]);
-        console.log(data);
-      })
-      .catch((err) => setRequestErrors(err.response.data.message));
-  };
+  const loginHandler = async (
+    phoneNumber: string,
+    password: string
+  ): Promise<void> => {
+    const axiosError: void | AxiosError<IError> = await auth.login(
+      phoneNumber,
+      password
+    )
+    if (axiosError instanceof AxiosError) {
+      // if array
+      if (
+        axiosError.response &&
+        axiosError.response.data.message instanceof Array
+      ) {
+        setRequestErrors(axiosError.response?.data.message)
+      }
+      // if string
+      if (
+        axiosError.response &&
+        typeof axiosError.response.data.message === 'string'
+      ) {
+        setRequestErrors([...requestErrors, axiosError.response.data.message])
+      }
+    } else {
+      setRequestErrors([])
+      navigate('/')
+    }
+  }
 
   const validateNumber = (value: string) => {
-    let error;
+    let error
     if (!value) {
-      error = 'Required field';
+      error = 'Required field'
     } else if (
       !value.match(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,4}$/)
     ) {
-      error = '0991234567';
+      error = '0991234567'
     }
-    if (error == undefined) setErrorField({ ...errorField, number: true });
-    return error;
-  };
+    if (error == undefined) setErrorField({ ...errorField, number: true })
+    return error
+  }
   const validatePassword = (value: string) => {
-    let error;
+    let error
     if (!value) {
-      error = 'Required field';
+      error = 'Required field'
     } else if (value.length < 6) {
-      error = 'Password should have more then 6 chars';
+      error = 'Password should have more then 6 chars'
     } else if (value.length > 20) {
-      error = 'Too long password';
+      error = 'Too long password'
     }
-    if (error == undefined) setErrorField({ ...errorField, password: true });
-    return error;
-  };
+    if (error == undefined) setErrorField({ ...errorField, password: true })
+    return error
+  }
 
   return (
-    <div className="h-screen flex justify-center items-center bg-[url('https://images.unsplash.com/photo-1494488180300-4c634d1b2124?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1332&q=80')] bg-cover">
+    <div className="h-screen   flex justify-center items-center bg-[url(public/bg.jpg)] bg-cover">
       <div className="flex flex-col justify-evenly items-center w-96 h-96 bg-slate-900 rounded-lg">
-        <h3 className="scale-125">Login</h3>
+        <h3 className="scale-150 font-medium">Login</h3>
         <Formik
           initialValues={{ phoneNumber: '', password: '' }}
           onSubmit={(values) => {
-            loginHandler(values.phoneNumber, values.password);
+            loginHandler(values.phoneNumber, values.password)
           }}
         >
           <Form className="w-4/5 h-4/6 flex flex-col justify-between">
@@ -73,8 +96,8 @@ const LoginPage = () => {
                 className="error"
               >
                 {(msg) => {
-                  setErrorField({ ...errorField, number: false });
-                  return <div style={{ color: 'red' }}>{msg}</div>;
+                  setErrorField({ ...errorField, number: false })
+                  return <div style={{ color: 'red' }}>{msg}</div>
                 }}
               </ErrorMessage>
             </div>
@@ -90,8 +113,8 @@ const LoginPage = () => {
               {errorField.password && <div>ㅤ</div>}
               <ErrorMessage name="password" component="div" className="error">
                 {(msg) => {
-                  setErrorField({ ...errorField, password: false });
-                  return <div style={{ color: 'red' }}>{msg}</div>;
+                  setErrorField({ ...errorField, password: false })
+                  return <div style={{ color: 'red' }}>{msg}</div>
                 }}
               </ErrorMessage>
             </div>
@@ -108,9 +131,10 @@ const LoginPage = () => {
             </button>
           </Form>
         </Formik>
+        <NavLink to={'/registration'}>Registration</NavLink>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage
