@@ -18,7 +18,7 @@ export class UserController {
   }
   @Post('login')
   @UsePipes(new ValidationPipe())
-  async login(@Body('user') userCredentials: LoginUserDto, @Req() req: Request, @Res() res: Response): Promise<any> {
+  async login(@Body('user') userCredentials: LoginUserDto, @Req() req: Request, @Res() res: Response): Promise<Response> {
     return await this.userService.login(userCredentials, req, res)
     // return this.userService.buildUserResponse(user)
   }
@@ -29,8 +29,9 @@ export class UserController {
     return this.userService.buildUserResponse(user)
   }
   @Get('refresh')
-  async getNewAccessToken(@Req() req: Request) {
-    return this.userService.createNewAccessToken(req)
+  async refreshAccessToken(@Req() req: Request, @Res() res: Response) {
+    return await this.userService.refreshAccessToken(req, res)
+    // res.send(token)
   }
   @Post('verify')
   async verifyJwt(@Body("token") token: string, @Req() req: Request) {

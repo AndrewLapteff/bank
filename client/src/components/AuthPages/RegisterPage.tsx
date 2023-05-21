@@ -1,12 +1,12 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import { useContext, useState } from 'react'
 import { AxiosError } from 'axios'
-import { AuthContext } from '../../App'
+import { StoreContext } from '../../App'
 import { IError } from '../../types/Error.interface'
 import { NavLink } from 'react-router-dom'
 
 const RegisterPage = () => {
-  const { store } = useContext(AuthContext)
+  const { auth } = useContext(StoreContext)
   const [requestErrors, setRequestErrors] = useState<string[]>([])
   const [errorField, setErrorField] = useState({
     fullname: true,
@@ -19,7 +19,7 @@ const RegisterPage = () => {
     phoneNumber: string,
     password: string
   ) => {
-    const axiosError: void | AxiosError<IError> = await store.registration(
+    const axiosError: void | AxiosError<IError> = await auth.registration(
       username,
       phoneNumber,
       password

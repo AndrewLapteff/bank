@@ -1,9 +1,9 @@
 import $api from "../api/api"
-import { TransactionType } from "../types/TransacionType"
+import { Transaction } from "../types/Transaction"
 
 export default class TransactionService {
   static async getAllTransactions() {
-    return $api.get<TransactionType[]>('transactions/all', {
+    return $api.get<Transaction[]>('transactions/all', {
       headers: { Authorization: localStorage.getItem('token') }
     })
   }

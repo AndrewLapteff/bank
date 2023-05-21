@@ -1,45 +1,58 @@
-import { AxiosResponse } from 'axios'
-import { TransactionType } from '../../../types/TransacionType'
-import Expense from './Expense'
-import Income from './Income'
-import { UseQueryResult, useQuery } from '@tanstack/react-query'
-import TransactionService from '../../../services/TransactionsService'
-import { useContext, useEffect } from 'react'
-import { AuthContext } from '../../../App'
+import TransactionItem from './TransactionItem'
+import { useContext, useEffect, useState } from 'react'
+import { StoreContext } from '../../../App'
+import { observer } from 'mobx-react-lite'
+import { PaginationButton } from './PaginationButton'
 
-const Transactions = () => {
-  const { transactions } = useContext(AuthContext)
+const Transactions = observer(() => {
+  const { transactions } = useContext(StoreContext)
+  const countOfPages = Math.ceil(transactions.count / 7)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageNumbers = Array.from(
+    { length: countOfPages },
+    (_, index) => index + 1
+  )
+
   useEffect(() => {
-    transactions.getAllTransaction()
-  }, [])
-  const {
-    data,
-    isLoading,
-    isError,
-    failureReason,
-  }: UseQueryResult<AxiosResponse<{ transactions: TransactionType[] }>> =
-    useQuery({
-      queryKey: ['transactions'],
-      queryFn: () => TransactionService.getAllTransactions(),
-    })
-  // if (isLoading) return <div>loading</div>
-  // if (isError) return <div>error</div>
+    transactions.getTransactionWithLimitOffset(7, 1)
+  }, [transactions])
+
+  const setCurrentPageHandler = (page: number) => {
+    transactions.getTransactionWithLimitOffset(7, page)
+    setCurrentPage(page)
+  }
+  console.log(transactions.isError)
   return (
-    <div className="bg-bg-color p-5 rounded-2xl flex flex-col justify-start w-6/12 h-full">
-      <h2 className="text-2xl font-bold h-fit ml-2 mb-4">
-        Recent transactions
-      </h2>
-      {isLoading && <div className="text-center">Loading...</div>}
-      {isError && <div className="text-center">Something went wrong</div>}
-      {/* {data.data.transactions.map((trans) =>
-        trans.senderId === userInfo.id ? (
-          <Expense transaction={trans} key={trans.id} />
+    <div className="bg-bg-color p-5 rounded-2xl flex flex-col justify-between w-6/12 h-full">
+      <div>
+        <h2 className="text-2xl font-bold h-fit ml-2">Recent transactions</h2>
+      </div>
+      <div className="h-5/6 flex flex-col justify-between">
+        {transactions.isLoading ? (
+          <div className="text-center">Loading...</div>
         ) : (
-          <Income transaction={trans} key={trans.id} />
-        )
-      )} */}
+          transactions.transactions.map((i) => {
+            return <TransactionItem key={Math.random()} transaction={i} />
+          })
+        )}
+        {transactions.isError && (
+          <div className="text-center">Something went wrong</div>
+        )}
+      </div>
+      <div className="flex gap-3 ml-5">
+        {pageNumbers.map((page) => {
+          return (
+            <PaginationButton
+              page={page}
+              isActive={page === currentPage}
+              onClick={() => setCurrentPageHandler(page)}
+              key={Math.random()}
+            />
+          )
+        })}
+      </div>
     </div>
   )
-}
+})
 
 export default Transactions

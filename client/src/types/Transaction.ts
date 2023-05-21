@@ -1,4 +1,4 @@
-export type TransactionType = {
+export interface Transaction {
   id: number
   senderId: number
   receiverId: number

@@ -1,8 +1,9 @@
-export type UserType = {
+export interface User {
+  username: string
   id: number,
   phoneNumber: string,
   cardNumber: number,
   balance: number,
   iat: number
-  token: string
+  accessToken: string
 }

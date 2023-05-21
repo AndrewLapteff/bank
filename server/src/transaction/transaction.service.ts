@@ -11,6 +11,7 @@ import { Decimal } from '@prisma/client/runtime/library'
 @Injectable()
 export class TransactionService {
   constructor(private readonly userSevice: UserService) { }
+
   async createTransaction(currentUserId: number, transactionData: TransactionDto, inputPassword: string): Promise<Transactions> {
     const sender: Users = await client.users.findFirst({ where: { id: currentUserId } })
     const receiver: Users = await client.users.findFirst({ where: { cardNumber: transactionData.cardNumber } })
@@ -32,25 +33,47 @@ export class TransactionService {
     await client.users.update({ where: { id: receiver.id }, data: { balance: receiver.balance.plus(transactionData.amount) } })
     return await client.transactions.create({ data: transaction })
   }
+
   async addMoney(currentUserId: number, amount: addMoneyDto): Promise<Users> {
     const user: { balance: Decimal } = await client.users.findFirst({ where: { id: currentUserId }, select: { balance: true } })
+    if (!user) {
+      throw new HttpException('You are not authorized', HttpStatus.UNAUTHORIZED)
+    }
     const updatedUser: Users = await client.users.update({ where: { id: currentUserId }, data: { balance: user.balance.plus(amount.amount) } })
     return updatedUser
   }
-  async getAllUserTransactions(currentUserId: number): Promise<Transactions[]> {
-    return await client.transactions.findMany({
+
+  async getTransactionsWithLimitOffset(currentUserId: number, limit: string = '20', offset: string = '0'): Promise<TransactionsResponse> {
+    if (limit == '') limit = '20'
+    if (offset == '') offset = '0'
+    const countOfTransaction = await client.transactions.count({ where: { OR: [ { senderId: currentUserId }, { receiverId: currentUserId } ] } })
+    const transactions: Transactions[] = await client.transactions.findMany({
       where: { OR: [ { senderId: currentUserId }, { receiverId: currentUserId } ] }
+      , skip: +offset, take: +limit
     })
+    return { transactions, count: countOfTransaction }
   }
+
   async getAllSentTransactions(currentUserId: number): Promise<Transactions[]> {
     return await client.transactions.findMany({ where: { senderId: currentUserId } })
   }
+
   async getAllReceiverTransactions(currentUserId: number): Promise<Transactions[]> {
     return await client.transactions.findMany({ where: { receiverId: currentUserId } })
   }
-  async testGet() {
-    return client.transactions.findFirst({ where: { id: 1 } })
+
+  async getAllTransactionsAmount(currentUserId: number): Promise<{ incomes: Decimal, expenses: Decimal }> {
+    const expensesData = await client.transactions.aggregate({ where: { senderId: currentUserId }, _sum: { amount: true } })
+    const incomesData = await client.transactions.aggregate({ where: { receiverId: currentUserId }, _sum: { amount: true }, })
+    const expenses = expensesData._sum.amount
+    const incomes = incomesData._sum.amount
+    return { incomes, expenses }
+
   }
+  async testGet() {
+    return client.transactions.findMany({ where: { id: 1 } })
+  }
+
   async createCommission(amount: number): Promise<{ amount: number, commission: number }> {
     let amountWithoutCommission = amount
     amount = amount / 100 * 99
@@ -60,10 +83,12 @@ export class TransactionService {
     await client.users.update({ where: { id: 1 }, data: bankBalance })
     return { amount: amount, commission: commission }
   }
+
   async buildTransactionResponse(transaction: Transactions): Promise<TransactionResponse> {
     return { transaction }
   }
+
   async buildTransactionsResponse(transactions: Transactions[]): Promise<TransactionsResponse> {
-    return { transactions: transactions, transactionsCount: transactions.length }
+    return { transactions: transactions, count: transactions.length }
   }
 }

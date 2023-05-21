@@ -1,15 +1,15 @@
-import { makeAutoObservable } from "mobx"
-import { UserType } from "../types/UserType"
+import { makeAutoObservable, runInAction } from "mobx"
+import { User } from "../types/User"
 import AuthService from "../services/AuthService"
 import axios, { AxiosError, AxiosResponse, } from "axios"
 import { IError } from "../types/Error.interface"
 import $api, { API_URL, queryClient } from "../api/api"
-import { TransactionType } from "../types/TransacionType"
-import { UseQueryResult, useQuery } from "@tanstack/react-query"
-import TransactionService from "../services/TransactionsService"
+import { Transaction } from "../types/Transaction"
+import { AmountInfo } from "../types/AmountInfo"
+
 
 export default class AuthStore {
-  user: UserType = {} as UserType
+  user: User = {} as User
   isAuth = false
   isLoading = false
 
@@ -19,71 +19,175 @@ export default class AuthStore {
   setAuth(bool: boolean): void {
     this.isAuth = bool
   }
-  setUser(user: UserType): void {
+  setUser(user: User): void {
     this.user = user
   }
-  async login(phoneNumber: string, password: string): Promise<void | AxiosError<IError>> {
+
+  async login(phoneNumber: string, password: string): Promise<AxiosError | undefined> {
     try {
-      const response: AxiosResponse<{ user: UserType }> = await AuthService.login(phoneNumber, password)
-      localStorage.setItem('token', response.data.user.token)
-      this.setUser(response.data.user)
-      this.setAuth(true)
-    } catch (error: any) {
-      return error
+      const response: AxiosResponse<{ user: User }> = await AuthService.login(phoneNumber, password)
+      localStorage.setItem('token', response.data.user.accessToken)
+      runInAction(() => {
+        this.setUser(response.data.user)
+        this.setAuth(true)
+      })
+    } catch (error) {
+      if (error instanceof AxiosError)
+        return error
     }
   }
+
   async registration(username: string, phoneNumber: string, password: string): Promise<void | AxiosError<IError>> {
     try {
-      const response: AxiosResponse<{ user: UserType }> = await AuthService.registration(username, phoneNumber, password)
-      localStorage.setItem('token', response.data.user.token)
-      this.setUser(response.data.user)
-      this.setAuth(true)
-    } catch (error: any) {
-      return error
-    }
-  }
-  async logout(): Promise<void> {
-    try {
-      localStorage.removeItem('token')
-      this.setUser({} as UserType)
-      this.setAuth(false)
-    } catch (error: any) {
+      const response: AxiosResponse<{ user: User }> = await AuthService.registration(username, phoneNumber, password)
+      localStorage.setItem('token', response.data.user.accessToken)
+      runInAction(() => {
+        this.setUser(response.data.user)
+        this.setAuth(true)
+      })
+    } catch (error) {
       console.log(error)
     }
   }
+
+  async logout(): Promise<void> {
+    try {
+      localStorage.removeItem('token')
+      this.deleteAllCookies()
+      runInAction(() => {
+        this.setUser({} as User)
+        this.setAuth(false)
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  private deleteAllCookies() {
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+  }
+
   async checkUser(): Promise<void> {
     try {
       this.isLoading = true
-      const axiosResponse: AxiosResponse<{ accessToken: string }> = await axios.get<{ accessToken: string }>(`${API_URL}/users/refresh`, { withCredentials: true })
+      const axiosResponse: AxiosResponse<User> = await axios.get<User>(`${API_URL}/users/refresh`, { withCredentials: true })
       localStorage.setItem('token', axiosResponse.data.accessToken)
-      this.setAuth(true)
-      this.isLoading = false
+      axiosResponse.data.accessToken = ''
+      runInAction(() => {
+        this.user = { ...axiosResponse.data }
+        this.setAuth(true)
+        this.isLoading = false
+      })
     } catch (error) {
       if (error instanceof AxiosError) {
-        this.setAuth(false)
-        this.setUser({} as UserType)
-        this.isLoading = false
+        runInAction(() => {
+          this.setAuth(false)
+          this.setUser({} as User)
+          this.isLoading = false
+        })
       }
     }
   }
 }
 
+
 export class TransactionsStore {
-  transactions = [] as TransactionType[]
+  transactions = [] as Transaction[]
   isLoading = false
   isError = false
   failureReason = ''
+  count = 0
+  totalAmount = {} as AmountInfo
 
-  setTrasactions(newTransaction: []) {
-    this.transactions = JSON.parse(JSON.stringify(newTransaction))
+  constructor() {
+    makeAutoObservable(this)
   }
 
-  async getAllTransaction() {
-    const transaction = await queryClient.fetchQuery([ 'transactions' ], {
-      queryFn: () => {
-        $api.get('transactions/all', { headers: { Authorization: localStorage.getItem('token') } })
-          .then(response => console.log(response))
-      }
-    })
+  async getAllExpencesAndIncomes() {
+    try {
+      const transactionsAmounts = await queryClient.fetchQuery([ 'transactionsAmounts' ], {
+        queryFn: async () => {
+          const axiosResponse: AxiosResponse<{ incomes: string, expenses: string }> = await $api.get('transactions/amount/total', { headers: { Authorization: localStorage.getItem('token') } })
+          return axiosResponse.data
+        }
+      })
+      runInAction(() => {
+        this.totalAmount.expenses = +transactionsAmounts.expenses
+        this.totalAmount.incomes = +transactionsAmounts.incomes
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  async getTransactionWithLimitOffset(limit: number, page: number) {
+    try {
+      this.isLoading = true
+      const transactions: Transaction[] = await queryClient.ensureQueryData([ 'transactions', page ], {
+        queryFn: async () => {
+          const axiosResponse: AxiosResponse<{ transactions: Transaction[], count: number }> = await $api.get(`transactions?limit=${limit}&offset=${page * 7 - 7}`, { headers: { Authorization: localStorage.getItem('token') } })
+          runInAction(() => {
+            this.count = axiosResponse.data.count
+          })
+          return axiosResponse.data.transactions
+        }
+      })
+      runInAction(() => {
+        this.transactions = JSON.parse(JSON.stringify(transactions))
+        this.isLoading = false
+      })
+    } catch (error) {
+      runInAction(() => {
+        this.isLoading = false
+        this.isError = true
+      })
+    }
+  }
+
+  getAllTransactionsInRealTme() {
+    const eventSource = new EventSource(
+      'http://localhost:3000/transactions/sse',
+      { withCredentials: true }
+    )
+    eventSource.onmessage = ({ data }) => {
+      getRealTimeData(JSON.parse(data))
+    }
+
+    const getRealTimeData = (data: Transaction[]) => {
+      runInAction(() => {
+        this.transactions = [ ...data ]
+      })
+    }
   }
 }
+
+ // if (page == 1) {
+    //   try {
+    //     this.isLoading = true
+    //     const cachedTransactions: Transaction[] | undefined = queryClient.getQueryData([ 'transactions', 1 ],)
+    //     if (cachedTransactions) {
+    //       runInAction(() => {
+    //         this.transactions = cachedTransactions
+    //       })
+    //     }
+
+    //     const transactions: Transaction[] = await queryClient.fetchQuery([ 'transactions', page ], {
+    //       queryFn: async () => {
+    //         const axiosResponse: AxiosResponse<{ transactions: Transaction[], count: number }> = await $api.get(`transactions/all?limit=7&offset=${page * 7 - 7}`, { headers: { Authorization: localStorage.getItem('token') } })
+    //         runInAction(() => {
+    //           this.count = axiosResponse.data.count
+    //         })
+    //         return axiosResponse.data.transactions
+    //       }
+    //     })
+    //     runInAction(() => {
+    //       this.transactions = JSON.parse(JSON.stringify(transactions))
+    //       this.isLoading = false
+    //     })
+    //   } catch (error) {
+    //     runInAction(() => {
+    //       this.isLoading = false
+    //       this.isError = true
+    //     })
+    //   }
+    // }

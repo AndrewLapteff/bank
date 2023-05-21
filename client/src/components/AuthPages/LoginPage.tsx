@@ -1,12 +1,12 @@
 import { ErrorMessage, Field, Form, Formik } from 'formik'
 import { useContext, useState } from 'react'
-import { AuthContext } from '../../App'
+import { StoreContext } from '../../App'
 import { AxiosError } from 'axios'
 import { IError } from '../../types/Error.interface'
 import { NavLink, NavigateFunction, useNavigate } from 'react-router-dom'
 
 const LoginPage = () => {
-  const { auth } = useContext(AuthContext)
+  const { auth } = useContext(StoreContext)
   const [requestErrors, setRequestErrors] = useState<string[]>([])
   const [errorField, setErrorField] = useState({
     number: true,
@@ -18,7 +18,7 @@ const LoginPage = () => {
     phoneNumber: string,
     password: string
   ): Promise<void> => {
-    const axiosError: void | AxiosError<IError> = await auth.login(
+    const axiosError: unknown | AxiosError<IError> = await auth.login(
       phoneNumber,
       password
     )
@@ -69,7 +69,7 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="h-screen   flex justify-center items-center bg-[url(public/bg.jpg)] bg-cover">
+    <div className="h-screen flex justify-center items-center bg-[url(public/bg.jpg)] bg-cover">
       <div className="flex flex-col justify-evenly items-center w-96 h-96 bg-slate-900 rounded-lg">
         <h3 className="scale-150 font-medium">Login</h3>
         <Formik

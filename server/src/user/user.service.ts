@@ -12,6 +12,7 @@ import { Request, Response } from 'express'
 export class UserService {
 
   async createUser(user: CreateUserDto): Promise<UserType> {
+    const { refreshToken } = await this.createRefreshToken(user.phoneNumber, user.username)
     const newUser: UserType = await client.users.create({
       data: {
         token: '',
@@ -33,35 +34,49 @@ export class UserService {
     const isPasswordCorrect: boolean = await this.verifyPassword(userCredentials.password, currentUser.password)
     if (!isPasswordCorrect)
       throw new HttpException('Password incorrect', HttpStatus.FORBIDDEN)
-    const { accessToken, refreshToken } = await this.createJwtTokens(currentUser)
+    const { accessToken } = await this.createAccessToken(currentUser)
+    const { refreshToken } = await this.createRefreshToken(currentUser.phoneNumber, currentUser.username)
     this.updateRefreshTokenInDB(refreshToken, userCredentials.phoneNumber)
-    response.cookie('token', refreshToken, { httpOnly: true, secure: true, maxAge: 2592000000 })
+    response.cookie('token', refreshToken, { httpOnly: false, secure: true, maxAge: 2592000000 })
     currentUser.token = accessToken
     return response.send(this.buildUserResponse(currentUser))
   }
 
   async getCurrentUser(id: number): Promise<UserType> {
     const currentUser: UserType = await client.users.findFirst({ where: { id } })
-    const { accessToken } = await this.createJwtTokens(currentUser)
+    const { accessToken } = await this.createAccessToken(currentUser)
     currentUser.token = accessToken
     return currentUser
   }
 
-  async createJwtTokens(user: Users): Promise<{ accessToken: string, refreshToken: string }> {
-    const accessToken = sign({ id: user.id, phoneNumber: user.phoneNumber, balance: user.balance, cardNumber: user.cardNumber, }, process.env.SECRET, { expiresIn: '30m' })
-    const refreshToken = sign({ id: user.id, phoneNumber: user.phoneNumber, balance: user.balance, cardNumber: user.cardNumber, }, process.env.SECRET, { expiresIn: '30d' })
-    return { accessToken, refreshToken }
+  async getUserByRefresh(token: string): Promise<UserType> {
+    const currentUser: UserType = await client.users.findFirst({ where: { token } })
+    return currentUser
   }
 
-  async createNewAccessToken(req: Request): Promise<{ accessToken: string }> {
-    let refreshToken: string = req.headers.cookie
-    refreshToken = refreshToken.slice(6, 1000)
-    const user: Users = await client.users.findFirst({ where: { token: refreshToken } })
-    if (!user) {
-      throw new HttpException('Relogin please', HttpStatus.FORBIDDEN)
-    }
+  async createAccessToken(user: Users): Promise<{ accessToken: string }> {
     const accessToken = sign({ id: user.id, phoneNumber: user.phoneNumber, balance: user.balance, cardNumber: user.cardNumber, }, process.env.SECRET, { expiresIn: '30m' })
     return { accessToken }
+  }
+
+  async createRefreshToken(phoneNumber: string, username: string): Promise<{ refreshToken: string }> {
+    const refreshToken = sign({ phoneNumber, username }, process.env.SECRET, { expiresIn: '30d' })
+    return { refreshToken }
+  }
+
+  async refreshAccessToken(req: Request, res: Response): Promise<Response<{ accessToken: string }>> {
+    let refreshToken: string = req.headers.cookie
+    if (!refreshToken) {
+      throw new HttpException('Login, please', HttpStatus.UNAUTHORIZED)
+    }
+    refreshToken = refreshToken.slice(6, 1000)
+    const user = await client.users.findFirst({ where: { token: refreshToken }, select: { id: true, username: true, cardNumber: true, balance: true, phoneNumber: true } })
+    if (!user) {
+      res.cookie('token', '')
+      return res.send({ accessToken: '' })
+    }
+    const accessToken = sign({ id: user.id, phoneNumber: user.phoneNumber, balance: user.balance, cardNumber: user.cardNumber, }, process.env.SECRET, { expiresIn: '30m' })
+    return res.send({ ...user, accessToken })
   }
 
   async updateRefreshTokenInDB(refreshToken: string, phoneNumber: string): Promise<void> {

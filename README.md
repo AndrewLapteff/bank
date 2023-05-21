@@ -4,6 +4,9 @@
 
 - React
 - MobX
+- React Query
+- Axios
+- ChartJS
 
 ##### Backend
 
@@ -37,4 +40,4 @@ $ npm run start:prod
 
 ### Database design
 
-![DB_design](https://i.ibb.co/pPMhbwJ/DB-design.jpg)
+![DB_design](https://i.ibb.co/bv64Jyc/Bank-DB.jpg)

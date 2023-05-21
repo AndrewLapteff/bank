@@ -13,24 +13,27 @@ axios.interceptors.request.use(config => {
 })
 
 // покриває помилки крім checkUser
-axios.interceptors.response.use(config => {
+document.cookie.length != 0 && axios.interceptors.response.use(config => {
   return config
 }, async (error) => {
   if (error instanceof AxiosError && error.config) {
     const originalRequest: InternalAxiosRequestConfig | undefined = error.config
-    console.log('dasdsa')
-    if ((error.response?.status == 401 || error.response?.status == 403) && !error.config._isRetry) {
-      originalRequest._isRetry = true
-      console.log('401')
+    if (error.response?.status === 401) {
+      console.log('refresh is dead')
+      return
+    }
+    if (error.response?.status !== 403) {
       try {
         const axiosResponse: AxiosResponse<{ accessToken: string }> = await axios.get<{ accessToken: string }>(`${API_URL}/users/refresh`, { withCredentials: true })
+        console.log('access is dead', axiosResponse.data.accessToken)
         localStorage.setItem('token', axiosResponse.data.accessToken)
         return $api.request(originalRequest)
       } catch (error) {
-        console.log(error)
+        return Promise.reject(error)
       }
     }
   }
+  return
 }
 )
 
