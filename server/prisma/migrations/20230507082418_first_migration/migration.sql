@@ -3,6 +3,7 @@ CREATE TABLE "Users" (
     "id" SERIAL NOT NULL,
     "username" TEXT NOT NULL,
     "phoneNumber" TEXT NOT NULL,
+    "CVV" SMALLINT NOT NULL,
     "password" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "balance" DECIMAL NOT NULL,

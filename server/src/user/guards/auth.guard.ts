@@ -9,6 +9,9 @@ export class AuthGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const request: Request = context.switchToHttp().getRequest()
+    if (request.headers.authorization.slice(0, 7) == 'Bearer ') {
+      request.headers.authorization = request.headers.authorization.slice(7, 333)
+    }
     const token = request.headers.authorization
     try {
       const JwtData = verify(token, process.env.SECRET)

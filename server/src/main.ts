@@ -7,7 +7,7 @@ export const client = new PrismaClient()
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
-  app.enableCors({ credentials: true, origin: 'http://localhost:5173', allowedHeaders: [ 'Content-Type', 'Authorization' ], methods: [ 'GET', 'PUT', 'POST' ] })
+  app.enableCors({ credentials: true, origin: 'http://localhost:5173', allowedHeaders: [ 'Content-Type', 'Authorization' ], methods: [ 'GET', 'PUT', 'POST', 'PATCH' ] })
   app.use(cookieParser())
   await app.listen(3000)
 }

@@ -15,6 +15,7 @@ model Users {
   username         String
   phoneNumber      String         @unique
   cardNumber       Int            @unique @default(0000000000000000)
+  CVV              Int
   password         String
   token            String
   balance          Decimal

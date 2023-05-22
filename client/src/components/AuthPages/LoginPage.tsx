@@ -2,7 +2,7 @@ import { ErrorMessage, Field, Form, Formik } from 'formik'
 import { useContext, useState } from 'react'
 import { StoreContext } from '../../App'
 import { AxiosError } from 'axios'
-import { IError } from '../../types/Error.interface'
+import { ErrorArrStr } from '../../types/Error.interface'
 import { NavLink, NavigateFunction, useNavigate } from 'react-router-dom'
 
 const LoginPage = () => {
@@ -18,7 +18,7 @@ const LoginPage = () => {
     phoneNumber: string,
     password: string
   ): Promise<void> => {
-    const axiosError: unknown | AxiosError<IError> = await auth.login(
+    const axiosError: unknown | AxiosError<ErrorArrStr> = await auth.login(
       phoneNumber,
       password
     )
@@ -69,8 +69,8 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="h-screen flex justify-center items-center bg-[url(public/bg.jpg)] bg-cover">
-      <div className="flex flex-col justify-evenly items-center w-96 h-96 bg-slate-900 rounded-lg">
+    <div className="flex h-screen items-center justify-center bg-[url(public/bg.jpg)] bg-cover">
+      <div className="flex h-96 w-96 flex-col items-center justify-evenly rounded-lg bg-slate-900">
         <h3 className="scale-150 font-medium">Login</h3>
         <Formik
           initialValues={{ phoneNumber: '', password: '' }}
@@ -78,11 +78,11 @@ const LoginPage = () => {
             loginHandler(values.phoneNumber, values.password)
           }}
         >
-          <Form className="w-4/5 h-4/6 flex flex-col justify-between">
+          <Form className="flex h-4/6 w-4/5 flex-col justify-between">
             <div className="flex flex-col">
               <label htmlFor="name">Number:</label>
               <Field
-                className="p-1 text-lg rounded-md"
+                className="rounded-md p-1 text-lg"
                 type="text"
                 id="name"
                 name="phoneNumber"
@@ -104,7 +104,7 @@ const LoginPage = () => {
             <div className="flex flex-col">
               <label htmlFor="password">Password:</label>
               <Field
-                className="p-1 rounded-md"
+                className="rounded-md p-1"
                 type="password"
                 id="password"
                 name="password"
@@ -121,11 +121,11 @@ const LoginPage = () => {
             {requestErrors.length === 0 ? (
               <div>ㅤ</div>
             ) : (
-              <span className="font-bold text-center">{requestErrors}</span>
+              <span className="text-center font-bold">{requestErrors}</span>
             )}
             <button
               type="submit"
-              className="text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-950 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700  "
+              className="mb-2 mr-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 active:bg-blue-950 dark:bg-blue-600 dark:hover:bg-blue-700  "
             >
               Login
             </button>

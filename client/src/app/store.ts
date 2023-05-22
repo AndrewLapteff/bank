@@ -2,10 +2,11 @@ import { makeAutoObservable, runInAction } from "mobx"
 import { User } from "../types/User"
 import AuthService from "../services/AuthService"
 import axios, { AxiosError, AxiosResponse, } from "axios"
-import { IError } from "../types/Error.interface"
-import $api, { API_URL, queryClient } from "../api/api"
+import { ErrorArrStr, ErrorStr } from "../types/Error.interface"
+import $api, { API_URL, cookies, queryClient } from "../api/api"
 import { Transaction } from "../types/Transaction"
 import { AmountInfo } from "../types/AmountInfo"
+import { ValidateUserFields } from "../components/AccountSettings/AccountSettings"
 
 
 export default class AuthStore {
@@ -37,7 +38,7 @@ export default class AuthStore {
     }
   }
 
-  async registration(username: string, phoneNumber: string, password: string): Promise<void | AxiosError<IError>> {
+  async registration(username: string, phoneNumber: string, password: string): Promise<void | AxiosError<ErrorArrStr>> {
     try {
       const response: AxiosResponse<{ user: User }> = await AuthService.registration(username, phoneNumber, password)
       localStorage.setItem('token', response.data.user.accessToken)
@@ -68,6 +69,13 @@ export default class AuthStore {
   }
 
   async checkUser(): Promise<void> {
+    if (!cookies.token) {
+      runInAction(() => {
+        this.isAuth = false
+        this.isLoading = false
+      })
+      return
+    }
     try {
       this.isLoading = true
       const axiosResponse: AxiosResponse<User> = await axios.get<User>(`${API_URL}/users/refresh`, { withCredentials: true })
@@ -88,6 +96,19 @@ export default class AuthStore {
       }
     }
   }
+
+  async updateUserData(newUserData: ValidateUserFields): Promise<AxiosError<ErrorStr> | void> {
+    try {
+      const axionsResponse: AxiosResponse<User> = await $api<User>({ method: 'patch', url: `${API_URL}/users/update`, data: { data: newUserData }, withCredentials: true, headers: { Authorization: localStorage.getItem('token') } })
+      runInAction(() => {
+        this.user = Object.assign(this.user, axionsResponse.data)
+      })
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        return error
+      }
+    }
+  }
 }
 
 
@@ -105,7 +126,7 @@ export class TransactionsStore {
 
   async getAllExpencesAndIncomes() {
     try {
-      const transactionsAmounts = await queryClient.fetchQuery([ 'transactionsAmounts' ], {
+      const transactionsAmounts = await queryClient.ensureQueryData([ 'transactionsAmounts' ], {
         queryFn: async () => {
           const axiosResponse: AxiosResponse<{ incomes: string, expenses: string }> = await $api.get('transactions/amount/total', { headers: { Authorization: localStorage.getItem('token') } })
           return axiosResponse.data

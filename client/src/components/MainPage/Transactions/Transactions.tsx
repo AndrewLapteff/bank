@@ -21,7 +21,6 @@ const Transactions = observer(() => {
     transactions.getTransactionWithLimitOffset(7, page)
     setCurrentPage(page)
   }
-  console.log(transactions.isError)
   return (
     <div className="bg-bg-color p-5 rounded-2xl flex flex-col justify-between w-6/12 h-full">
       <div>

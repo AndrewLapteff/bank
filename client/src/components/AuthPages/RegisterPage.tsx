@@ -2,7 +2,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik'
 import { useContext, useState } from 'react'
 import { AxiosError } from 'axios'
 import { StoreContext } from '../../App'
-import { IError } from '../../types/Error.interface'
+import { ErrorArrStr } from '../../types/Error.interface'
 import { NavLink } from 'react-router-dom'
 
 const RegisterPage = () => {
@@ -19,7 +19,7 @@ const RegisterPage = () => {
     phoneNumber: string,
     password: string
   ) => {
-    const axiosError: void | AxiosError<IError> = await auth.registration(
+    const axiosError: void | AxiosError<ErrorArrStr> = await auth.registration(
       username,
       phoneNumber,
       password
@@ -86,9 +86,9 @@ const RegisterPage = () => {
   }
 
   return (
-    <div className="h-screen flex justify-center items-center bg-[url('public/bg.jpg')] bg-cover">
-      <div className="flex flex-col justify-evenly items-center w-96 h-[28rem] bg-slate-900 rounded-lg">
-        <h3 className="scale-150 font-mediumw">Registration</h3>
+    <div className="flex h-screen items-center justify-center bg-[url('public/bg.jpg')] bg-cover">
+      <div className="flex h-[28rem] w-96 flex-col items-center justify-evenly rounded-lg bg-slate-900">
+        <h3 className="font-mediumw scale-150">Registration</h3>
         <Formik
           initialValues={{ username: '', phoneNumber: '', password: '' }}
           onSubmit={(values) => {
@@ -99,11 +99,11 @@ const RegisterPage = () => {
             )
           }}
         >
-          <Form className="w-4/5 flex flex-col justify-between">
+          <Form className="flex w-4/5 flex-col justify-between">
             <div className="flex flex-col">
               <label htmlFor="name">FullName:</label>
               <Field
-                className="p-1 text-lg rounded-md"
+                className="rounded-md p-1 text-lg"
                 type="text"
                 id="name"
                 name="username"
@@ -121,7 +121,7 @@ const RegisterPage = () => {
             <div className="flex flex-col">
               <label htmlFor="number">Number:</label>
               <Field
-                className="p-1 text-lg rounded-md"
+                className="rounded-md p-1 text-lg"
                 type="text"
                 id="number"
                 name="phoneNumber"
@@ -143,7 +143,7 @@ const RegisterPage = () => {
             <div className="flex flex-col">
               <label htmlFor="password">Password:</label>
               <Field
-                className="p-1 rounded-md"
+                className="rounded-md p-1"
                 type="password"
                 id="password"
                 name="password"
@@ -160,11 +160,11 @@ const RegisterPage = () => {
             {requestErrors.length === 0 ? (
               <div>ㅤ</div>
             ) : (
-              <span className="font-bold text-center">{requestErrors}</span>
+              <span className="text-center font-bold">{requestErrors}</span>
             )}
             <button
               type="submit"
-              className="text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-950 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700  "
+              className="mb-2 mr-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 active:bg-blue-950 dark:bg-blue-600 dark:hover:bg-blue-700  "
             >
               Register
             </button>

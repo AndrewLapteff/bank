@@ -7,6 +7,7 @@ import { sign, verify } from 'jsonwebtoken'
 import { UserType } from './types/userType'
 import { client } from '../main'
 import { Request, Response } from 'express'
+import { UpdateUserData } from './dto/updateUserData'
 
 @Injectable()
 export class UserService {
@@ -15,10 +16,11 @@ export class UserService {
     const { refreshToken } = await this.createRefreshToken(user.phoneNumber, user.username)
     const newUser: UserType = await client.users.create({
       data: {
-        token: '',
+        token: refreshToken,
         username: this.correctFullName(user.username),
         phoneNumber: user.phoneNumber,
         cardNumber: this.generateSequentialNumber(),
+        CVV: user.CVV,
         password: await this.createPassword(user.password),
         balance: 0,
         createdAt: new Date()
@@ -33,7 +35,7 @@ export class UserService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND)
     const isPasswordCorrect: boolean = await this.verifyPassword(userCredentials.password, currentUser.password)
     if (!isPasswordCorrect)
-      throw new HttpException('Password incorrect', HttpStatus.FORBIDDEN)
+      throw new HttpException('Password is incorrect', HttpStatus.UNAUTHORIZED)
     const { accessToken } = await this.createAccessToken(currentUser)
     const { refreshToken } = await this.createRefreshToken(currentUser.phoneNumber, currentUser.username)
     this.updateRefreshTokenInDB(refreshToken, userCredentials.phoneNumber)
@@ -47,6 +49,26 @@ export class UserService {
     const { accessToken } = await this.createAccessToken(currentUser)
     currentUser.token = accessToken
     return currentUser
+  }
+
+  async updateUsersFields(id: number, newUserData: UpdateUserData): Promise<Users> {
+    const currentUser: UserType = await client.users.findFirst({
+      where: { id }
+    })
+    const isPasswordCorrect = await this.verifyPassword(newUserData.password, currentUser.password)
+    if (!isPasswordCorrect) {
+      throw new HttpException('Password is incorrect', HttpStatus.UNAUTHORIZED)
+    }
+    const updatedUser = Object.assign(currentUser, newUserData)
+    if (newUserData.newPassword) {
+      updatedUser.password = await this.createPassword(newUserData.newPassword)
+      delete updatedUser.newPassword
+      await client.users.update({ where: { id }, data: updatedUser })
+    }
+    delete updatedUser.newPassword
+    delete updatedUser.password
+    await client.users.update({ where: { id }, data: updatedUser })
+    return updatedUser
   }
 
   async getUserByRefresh(token: string): Promise<UserType> {
@@ -87,7 +109,7 @@ export class UserService {
     try {
       return verify(token, process.env.SECRET)
     } catch (error) {
-      throw new HttpException('Update access please', HttpStatus.FORBIDDEN)
+      throw new HttpException('Login, please', HttpStatus.UNAUTHORIZED)
     }
   }
 

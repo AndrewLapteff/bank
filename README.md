@@ -7,6 +7,7 @@
 - React Query
 - Axios
 - ChartJS
+- Formik
 
 ##### Backend
 
