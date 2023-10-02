@@ -15,7 +15,7 @@ export const PaginationButton: FC<PaginationProps> = ({
     onClick(page)
   }
   return (
-    <div>
+    <li>
       <button
         className={` w-7 rounded-md ${
           isActive ? 'bg-[#424267]' : 'bg-[#2f2f46]'
@@ -24,6 +24,6 @@ export const PaginationButton: FC<PaginationProps> = ({
       >
         {page}
       </button>
-    </div>
+    </li>
   )
 }

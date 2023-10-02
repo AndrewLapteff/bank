@@ -13,12 +13,12 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
   }
 
   return (
-    <div className="flex justify-center items-center mt-3 mb-3">
-      <div className="w-full flex items-center justify-around">
+    <li className="mb-3 mt-3 flex items-center justify-center">
+      <div className="flex w-full items-center justify-around">
         <div className="flex items-center">
           {auth.user.id === transaction.receiverId ? (
             <>
-              <div className="bg-[#4ddf42] rounded-full w-fit h-fit p-1">
+              <div className="h-fit w-fit rounded-full bg-[#4ddf42] p-1">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -26,7 +26,7 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="w-8 h-8"
+                  className="h-8 w-8"
                 >
                   <path
                     strokeLinecap="round"
@@ -35,11 +35,11 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
                   />
                 </svg>
               </div>
-              <span className="ml-3 text-xl mr-2">Income </span>
+              <span className="ml-3 mr-2 text-xl">Income </span>
             </>
           ) : (
             <>
-              <div className="bg-[#df4242] rounded-full w-fit h-fit p-1">
+              <div className="h-fit w-fit rounded-full bg-[#df4242] p-1">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -47,7 +47,7 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="w-8 h-8"
+                  className="h-8 w-8"
                 >
                   <path
                     strokeLinecap="round"
@@ -61,14 +61,14 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
           )}
         </div>
         <div className="flex items-center">
-          <div className="bg-[#343434] rounded-full w-fit h-fit p-1">
+          <div className="h-fit w-fit rounded-full bg-[#343434] p-1">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className="w-6 h-6"
+              className="h-6 w-6"
             >
               <path
                 strokeLinecap="round"
@@ -77,12 +77,12 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
               />
             </svg>
           </div>
-          <div className="ml-3 text-md flex flex-col items-center">
-            <div className="text-[1.1rem]">
+          <div className="text-md ml-3 flex flex-col items-center">
+            <time className="text-[1.1rem]">
               {`${new Date(transaction.createdAt).getHours()}:`}
               {`${new Date(transaction.createdAt).getMinutes()}`}
               {/* {`:${new Date(transaction.createdAt).getSeconds()}`} */}
-            </div>
+            </time>
             <div className="text-[11px]">
               {`${new Date(transaction.createdAt).getFullYear()}/`}
               {`${new Date(transaction.createdAt).getMonth()}/`}
@@ -90,15 +90,15 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
             </div>
           </div>
         </div>
-        <div className="ml-5 flex items-center w-32 justify-start">
-          <div className="bg-[#343434] rounded-full w-fit h-fit p-1">
+        <div className="ml-5 flex w-32 items-center justify-start">
+          <div className="h-fit w-fit rounded-full bg-[#343434] p-1">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="#f8f817"
-              className="w-6 h-6"
+              className="h-6 w-6"
             >
               <path
                 strokeLinecap="round"
@@ -119,7 +119,7 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="rgb(46, 220, 89)"
-              className="w-6 h-6"
+              className="h-6 w-6"
             >
               <path
                 strokeLinecap="round"
@@ -134,7 +134,7 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="rgb(208, 48, 48)"
-              className="w-6 h-6"
+              className="h-6 w-6"
             >
               <path
                 strokeLinecap="round"
@@ -145,7 +145,7 @@ const TransactionItem: FC<{ transaction: Transaction }> = ({ transaction }) => {
           )}
         </div>
       </div>
-    </div>
+    </li>
   )
 }
 

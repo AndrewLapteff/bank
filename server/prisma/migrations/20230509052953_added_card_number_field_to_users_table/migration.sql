@@ -11,3 +11,6 @@ ALTER TABLE "Users" ADD COLUMN     "cardNumber" BIGINT NOT NULL DEFAULT 0;
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_cardNumber_key" ON "Users"("cardNumber");
+
+-- Seed
+INSERT INTO "Users" (id, username, "phoneNumber", "CVV", password, token, balance, "createdAt", "cardNumber") VALUES (0, 'BankAccount', '0000000000', '000' , 'qwerty', 'token', 0, CURRENT_TIMESTAMP, 1234567887654321)

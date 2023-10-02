@@ -23,7 +23,9 @@ export default {
     },
     extend: {
       colors: {
-        "bg-color": "#1B1B23"
+        "bg-color": "#1B1B23",
+        "bg-error": "#e42828",
+        "bg-successs": "#2ee21a"
       }
     }
   },

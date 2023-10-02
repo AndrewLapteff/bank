@@ -7,6 +7,8 @@ import $api, { API_URL, cookies, queryClient } from "../api/api"
 import { Transaction } from "../types/Transaction"
 import { AmountInfo } from "../types/AmountInfo"
 import { ValidateUserFields } from "../components/AccountSettings/AccountSettings"
+import TransactionService from "../services/TransactionsService"
+import { AddMoneyReponse } from "../types/AddMoneyResponse"
 
 
 export default class AuthStore {
@@ -47,6 +49,8 @@ export default class AuthStore {
         this.setAuth(true)
       })
     } catch (error) {
+      if (error instanceof AxiosError)
+        return error
       console.log(error)
     }
   }
@@ -64,7 +68,7 @@ export default class AuthStore {
     }
   }
 
-  private deleteAllCookies() {
+  deleteAllCookies() {
     document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
   }
 
@@ -119,9 +123,15 @@ export class TransactionsStore {
   failureReason = ''
   count = 0
   totalAmount = {} as AmountInfo
+  page = 1
 
-  constructor() {
+  constructor(readonly authStore: AuthStore) {
+    this.authStore = authStore
     makeAutoObservable(this)
+  }
+
+  setPage(page: number) {
+    this.page = page
   }
 
   async getAllExpencesAndIncomes() {
@@ -180,35 +190,43 @@ export class TransactionsStore {
       })
     }
   }
+
+  async addMoney(amount: number) {
+    try {
+      const response: AxiosResponse<AddMoneyReponse> = await TransactionService.addMoney(amount)
+      runInAction(() => {
+        this.count++
+        const countOfPages = Math.ceil(this.count / 7)
+        if (countOfPages == this.page && countOfPages >= this.count / 7)
+          this.transactions = [ ...this.transactions, response.data.transaction ]
+        const user = Object.assign(response.data.user, this.authStore.user)
+        this.authStore.setUser(user)
+        this.authStore.user.balance = +response.data.transaction.amount + +this.authStore.user.balance
+      })
+    } catch (error) {
+      if (error instanceof AxiosError)
+        return error
+    }
+  }
 }
 
- // if (page == 1) {
-    //   try {
-    //     this.isLoading = true
-    //     const cachedTransactions: Transaction[] | undefined = queryClient.getQueryData([ 'transactions', 1 ],)
-    //     if (cachedTransactions) {
-    //       runInAction(() => {
-    //         this.transactions = cachedTransactions
-    //       })
-    //     }
 
-    //     const transactions: Transaction[] = await queryClient.fetchQuery([ 'transactions', page ], {
-    //       queryFn: async () => {
-    //         const axiosResponse: AxiosResponse<{ transactions: Transaction[], count: number }> = await $api.get(`transactions/all?limit=7&offset=${page * 7 - 7}`, { headers: { Authorization: localStorage.getItem('token') } })
-    //         runInAction(() => {
-    //           this.count = axiosResponse.data.count
-    //         })
-    //         return axiosResponse.data.transactions
-    //       }
-    //     })
-    //     runInAction(() => {
-    //       this.transactions = JSON.parse(JSON.stringify(transactions))
-    //       this.isLoading = false
-    //     })
-    //   } catch (error) {
-    //     runInAction(() => {
-    //       this.isLoading = false
-    //       this.isError = true
-    //     })
-    //   }
-    // }
+export class SearchStore {
+  users: User[] = []
+
+  constructor() {
+    makeAutoObservable(this)
+  }
+
+  async searchUser(username: string) {
+    if (username)
+      try {
+        const response: AxiosResponse<User[]> = await $api.get(`users/search?user=${username}`)
+        runInAction(() => {
+          this.users = [ ...response.data ]
+        })
+      } catch (error) {
+        console.log(error)
+      }
+  }
+}

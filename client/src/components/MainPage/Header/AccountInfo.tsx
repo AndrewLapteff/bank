@@ -4,7 +4,7 @@ import { useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const AccountInfo = observer(() => {
-  const { auth } = useContext(StoreContext)
+  const { auth, search } = useContext(StoreContext)
   const [isOpen, setIsOpen] = useState(false)
 
   const options = ['Edit account', 'Logout']
@@ -22,10 +22,23 @@ const AccountInfo = observer(() => {
     }
     setIsOpen(false)
   }
+
+  console.log(JSON.parse(JSON.stringify(search.users)))
+  const searchUser = (username: string) => {
+    const timer = setTimeout(() => {
+      search.searchUser(username)
+    }, 500)
+    clearTimeout(`${+timer - 1}`)
+  }
+
   return (
-    <div className="bg-bg-color p-5 rounded-2xl flex justify-between items-center w-3/12 h-20 relative ">
-      <div className="flex justify-between w-full items-center">
-        <input className="p-1 rounded-md w-44 text-xl" placeholder="Search" />
+    <section className="relative flex h-20 w-3/12 items-center justify-between rounded-2xl bg-bg-color p-5 ">
+      <nav className="flex w-full items-center justify-between">
+        <input
+          className="w-44 rounded-md p-1 text-xl placeholder:text-center"
+          placeholder="Search"
+          onChange={(e) => searchUser(e.target.value)}
+        />
         <div className="text-md">{auth.user.username}</div>
         <div>
           <div className="relative flex items-center justify-center">
@@ -40,7 +53,7 @@ const AccountInfo = observer(() => {
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="w-6 h-6"
+                className="h-6 w-6"
               >
                 <path
                   strokeLinecap="round"
@@ -56,7 +69,7 @@ const AccountInfo = observer(() => {
             </button>
           </div>
           {isOpen && (
-            <div className="origin-top-right absolute right-0 mt-2 w-28 rounded-md shadow-lg bg-slate-800 ring-1 ring-black ring-opacity-5">
+            <div className="absolute right-0 mt-2 w-28 origin-top-right rounded-md bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5">
               <div
                 className="py-1"
                 role="menu"
@@ -66,7 +79,7 @@ const AccountInfo = observer(() => {
                 {options.map((option, index) => (
                   <button
                     key={index}
-                    className="block px-4 py-2 text-sm text-white rounded-md hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                    className="block w-full rounded-md px-4 py-2 text-left text-sm text-white hover:bg-gray-100 hover:text-gray-900"
                     role="menuitem"
                     onClick={() => handleOptionSelect(option)}
                   >
@@ -77,8 +90,8 @@ const AccountInfo = observer(() => {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </nav>
+    </section>
   )
 })
 

@@ -8,6 +8,7 @@ import { UserType } from './types/userType'
 import { client } from '../main'
 import { Request, Response } from 'express'
 import { UpdateUserData } from './dto/updateUserData'
+import { SearchUser } from './types/seatchUser'
 
 @Injectable()
 export class UserService {
@@ -19,14 +20,24 @@ export class UserService {
         token: refreshToken,
         username: this.correctFullName(user.username),
         phoneNumber: user.phoneNumber,
-        cardNumber: this.generateSequentialNumber(),
-        CVV: user.CVV,
+        cardNumber: this.generateSequentialNumber(16),
+        CVV: this.generateSequentialNumber(3),
         password: await this.createPassword(user.password),
         balance: 0,
         createdAt: new Date()
       }
     })
     return newUser
+  }
+
+  async searchUser(username: string): Promise<SearchUser[]> {
+    if (!username) {
+      throw new HttpException('No users', HttpStatus.NOT_FOUND)
+    }
+    username = this.correctFullName(username)
+    const users = await client.users.findMany({ where: { username: { startsWith: username } }, select: { id: true, cardNumber: true, phoneNumber: true, username: true } })
+
+    return users
   }
 
   async login(userCredentials: LoginUserDto, request: Request, response: Response): Promise<Response> {
@@ -46,7 +57,7 @@ export class UserService {
 
   async getCurrentUser(id: number): Promise<UserType> {
     const currentUser: UserType = await client.users.findFirst({ where: { id } })
-    const { accessToken } = await this.createAccessToken(currentUser)
+    const { accessToken } = await this.createAccessToken(currentUser) //fdsfs
     currentUser.token = accessToken
     return currentUser
   }
@@ -92,7 +103,7 @@ export class UserService {
       throw new HttpException('Login, please', HttpStatus.UNAUTHORIZED)
     }
     refreshToken = refreshToken.slice(6, 1000)
-    const user = await client.users.findFirst({ where: { token: refreshToken }, select: { id: true, username: true, cardNumber: true, balance: true, phoneNumber: true } })
+    const user = await client.users.findFirst({ where: { token: refreshToken }, select: { id: true, username: true, cardNumber: true, balance: true, phoneNumber: true, CVV: true } })
     if (!user) {
       res.cookie('token', '')
       return res.send({ accessToken: '' })
@@ -128,10 +139,20 @@ export class UserService {
     return { user }
   }
 
-  generateSequentialNumber(): number {
+  buildUserResponseForManyUsers(users: Users[]): Users[] {
+    return users.map(user => {
+      delete user.createdAt
+      delete user.password
+      delete user.token
+      delete user.CVV
+      return user
+    })
+  }
+
+  generateSequentialNumber(countOfNumbers: number): number {
     var randomNumber = ''
 
-    for (var i = 0; i < 16; i++) {
+    for (var i = 0; i < countOfNumbers; i++) {
       var digit = Math.floor(Math.random() * 10)
       randomNumber += digit
     }
@@ -140,17 +161,24 @@ export class UserService {
   }
 
   correctFullName(fullname: string): string {
-    fullname = fullname.toLowerCase().trim()
-    let nameAndSurname = fullname.split(' ')
-    let result: string = ''
-    nameAndSurname.forEach((credential, idx) => {
-      let isSpace = ' '
-      if (idx === 1)
-        isSpace = ''
-      let chars = credential.split('')
-      result += chars[ 0 ].toUpperCase() + credential.slice(1) + isSpace
-    })
-    return result
+    if (fullname.includes(' ')) {
+      fullname = fullname.toLowerCase().trim()
+      let nameAndSurname = fullname.split(' ')
+      let result: string = ''
+      nameAndSurname.forEach((credential, idx) => {
+        let isSpace = ' '
+        if (idx === 1)
+          isSpace = ''
+        let chars = credential.split('')
+        result += chars[ 0 ].toUpperCase() + credential.slice(1) + isSpace
+      })
+      return result
+    } else {
+      let result = ''
+      let chars = fullname.split('')
+      result += chars[ 0 ].toUpperCase() + fullname.slice(1)
+      return result
+    }
   }
 
 }

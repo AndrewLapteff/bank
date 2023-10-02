@@ -6,4 +6,5 @@ export interface User {
   balance: number,
   iat: number
   accessToken: string
+  CVV: number
 }

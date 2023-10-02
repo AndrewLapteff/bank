@@ -3,10 +3,10 @@ import CardInfo from './Header/CardInfo'
 
 const HeaderWrapper = () => {
   return (
-    <div className="mt-10 h-[80px] w-screen flex items-center justify-center gap-4">
+    <header className="mt-10 flex h-[80px] w-screen items-center justify-center gap-4">
       <CardInfo />
       <AccountInfo />
-    </div>
+    </header>
   )
 }
 

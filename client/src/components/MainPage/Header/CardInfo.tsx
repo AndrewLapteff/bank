@@ -1,15 +1,16 @@
 import { observer } from 'mobx-react-lite'
 import { StoreContext } from '../../../App'
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 
 const CardInfo = observer(() => {
   const { auth } = useContext(StoreContext)
+  const [isCVVVIsible, setCVVVIsibleStatus] = useState(false)
   return (
-    <div className="bg-bg-color p-5 rounded-2xl flex justify-between items-center w-6/12 h-20">
-      <div className="flex items-center justify-evenly w-full">
+    <section className="flex h-20 w-6/12 items-center justify-between rounded-2xl bg-bg-color p-5">
+      <div className="flex w-full items-center justify-evenly">
         <div className="flex flex-col">
-          <span className="text-gray-600 text-[1.1rem]">CARD NUMBER </span>
-          <span className="font-bold text-[1.1rem]">
+          <span className="text-[1.1rem] text-gray-600">CARD NUMBER </span>
+          <span className="text-[1.1rem] font-bold">
             {auth.user.cardNumber
               .toString()
               .split('')
@@ -17,21 +18,26 @@ const CardInfo = observer(() => {
           </span>
         </div>
         <div className="flex flex-col">
-          <span className="text-gray-600 text-[1.1rem]">EXPIRE DATE</span>
-          <span className="font-bold text-[1.1rem]">01/03</span>
+          <span className="text-[1.1rem] text-gray-600">EXPIRE DATE</span>
+          <span className="text-[1.1rem] font-bold">01/03</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-gray-600 text-[1.1rem]">CVC</span>
-          <span className="font-bold text-[1.1rem]">***</span>
+          <span className="text-[1.1rem] text-gray-600">CVV</span>
+          <button
+            onClick={() => setCVVVIsibleStatus((prev) => !prev)}
+            className="text-[1.1rem] font-bold"
+          >
+            {isCVVVIsible ? auth.user.CVV : '***'}
+          </button>
         </div>
         <div className="flex flex-col">
-          <span className="text-gray-600 text-[1.1rem]">BALANCE</span>
-          <span className="font-bold text-[1.1rem]">
+          <span className="text-[1.1rem] text-gray-600">BALANCE</span>
+          <span className="text-[1.1rem] font-bold">
             {auth.user.balance != 0 ? auth.user.balance : '0'}
           </span>
         </div>
       </div>
-    </div>
+    </section>
   )
 })
 

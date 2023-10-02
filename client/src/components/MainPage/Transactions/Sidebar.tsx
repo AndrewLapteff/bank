@@ -1,20 +1,26 @@
 import 'chart.js/auto'
-import { useContext, useEffect } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 Plugin
 import { StoreContext } from '../../../App'
 import { observer } from 'mobx-react-lite'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 
-const TransactionsDiagram = observer(() => {
+const Sidebar = observer(() => {
   const { transactions } = useContext(StoreContext)
+  const [amount, setAmount] = useState('')
 
   useEffect(() => {
     transactions.getAllExpencesAndIncomes()
   }, [transactions])
 
+  const handleAddMoney = () => {
+    transactions.addMoney(+amount)
+    setAmount('')
+  }
+
   return (
-    <div className="bg-bg-color p-5 rounded-2xl flex flex-col items-center w-3/12 h-full">
+    <aside className="flex h-full w-3/12 flex-col items-center justify-between rounded-2xl bg-bg-color p-5">
       <Doughnut
         plugins={[ChartDataLabels as any]}
         data={{
@@ -46,8 +52,24 @@ const TransactionsDiagram = observer(() => {
           },
         }}
       />
-    </div>
+      <div className="flex h-36 w-full flex-col items-center gap-2">
+        <h4 className="text-xl font-bold">Add money</h4>
+        <input
+          className="w-44 rounded-lg p-1 text-center text-xl placeholder:text-center"
+          placeholder="Amount"
+          type="number"
+          onChange={(e) => setAmount(e.target.value)}
+          value={amount}
+        />
+        <button
+          className="focus:shadow-outline  w-3/5 rounded-md bg-blue-500 py-2 text-lg font-bold text-white hover:bg-blue-700 focus:outline-none active:bg-blue-600"
+          onClick={() => handleAddMoney()}
+        >
+          Add
+        </button>
+      </div>
+    </aside>
   )
 })
 
-export default TransactionsDiagram
+export default Sidebar

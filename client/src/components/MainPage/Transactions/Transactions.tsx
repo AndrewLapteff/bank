@@ -20,13 +20,14 @@ const Transactions = observer(() => {
   const setCurrentPageHandler = (page: number) => {
     transactions.getTransactionWithLimitOffset(7, page)
     setCurrentPage(page)
+    transactions.setPage(page)
   }
   return (
-    <div className="bg-bg-color p-5 rounded-2xl flex flex-col justify-between w-6/12 h-full">
+    <section className="flex h-full w-6/12 flex-col justify-between rounded-2xl bg-bg-color p-5">
       <div>
-        <h2 className="text-2xl font-bold h-fit ml-2">Recent transactions</h2>
+        <h2 className="ml-2 h-fit text-2xl font-bold">Recent transactions</h2>
       </div>
-      <div className="h-5/6 flex flex-col justify-between">
+      <ul className="flex h-5/6 flex-col justify-start">
         {transactions.isLoading ? (
           <div className="text-center">Loading...</div>
         ) : (
@@ -37,20 +38,22 @@ const Transactions = observer(() => {
         {transactions.isError && (
           <div className="text-center">Something went wrong</div>
         )}
-      </div>
-      <div className="flex gap-3 ml-5">
-        {pageNumbers.map((page) => {
-          return (
-            <PaginationButton
-              page={page}
-              isActive={page === currentPage}
-              onClick={() => setCurrentPageHandler(page)}
-              key={Math.random()}
-            />
-          )
-        })}
-      </div>
-    </div>
+      </ul>
+      <nav>
+        <ul className="ml-5 flex gap-3">
+          {pageNumbers.map((page) => {
+            return (
+              <PaginationButton
+                page={page}
+                isActive={page === currentPage}
+                onClick={() => setCurrentPageHandler(page)}
+                key={Math.random()}
+              />
+            )
+          })}
+        </ul>
+      </nav>
+    </section>
   )
 })
 

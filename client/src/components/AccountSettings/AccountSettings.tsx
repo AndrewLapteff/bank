@@ -196,7 +196,7 @@ const AccountSettings = () => {
             <div className="flex items-center justify-center">
               <button
                 type="submit"
-                className="focus:shadow-outline  w-3/5  rounded bg-blue-500 px-4 py-2 text-lg font-bold text-white hover:bg-blue-700 focus:outline-none"
+                className="focus:shadow-outline  w-3/5  rounded bg-blue-500 px-4 py-2 text-lg font-bold text-white hover:bg-blue-700 focus:outline-none active:bg-blue-600"
               >
                 Save
               </button>

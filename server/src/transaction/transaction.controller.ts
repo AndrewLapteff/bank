@@ -12,6 +12,7 @@ import { UserResponse } from '@app/user/types/userRepsonse'
 import { interval, map } from 'rxjs'
 import { Request } from 'express'
 import { Decimal } from '@prisma/client/runtime/library'
+import { AddMoneyReponse } from '@app/user/types/addMoneyResponse'
 
 @Controller('transactions')
 export class TransactionController {
@@ -29,9 +30,8 @@ export class TransactionController {
   @Post('add')
   @UseGuards(AuthGuard)
   @UsePipes(new ValidationPipe())
-  async addMoney(@User('id') currentUserId: number, @Body() amount: addMoneyDto): Promise<UserResponse> {
-    const user: Users = await this.transactionService.addMoney(currentUserId, amount)
-    return this.userService.buildUserResponse(user)
+  async addMoney(@User('id') currentUserId: number, @Body() amount: addMoneyDto): Promise<AddMoneyReponse> {
+    return this.transactionService.addMoney(currentUserId, amount)
   }
   @Get()
   @UseGuards(AuthGuard)

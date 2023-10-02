@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common'
+import { Body, Controller, Get, Patch, Post, Query, Req, Res, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common'
 import { UserService } from './user.service'
 import { CreateUserDto } from './dto/createUser.dto'
 import { LoginUserDto } from './dto/loginUser.dto'
@@ -8,6 +8,7 @@ import { AuthGuard } from './guards/auth.guard'
 import { UserResponse } from './types/userRepsonse'
 import { Request, Response } from 'express'
 import { UpdateUserData } from './dto/updateUserData'
+import { SearchUser } from './types/seatchUser'
 
 @Controller('users')
 export class UserController {
@@ -43,5 +44,9 @@ export class UserController {
   async updateUsersFields(@Body('user') currentUser: Users, @Body('data') newUserData: UpdateUserData) {
     const updatedUser = await this.userService.updateUsersFields(currentUser.id, newUserData)
     return this.userService.buildUserResponse(updatedUser)
+  }
+  @Get('search')
+  async searchUser(@Query('user') user: string): Promise<SearchUser[]> {
+    return await this.userService.searchUser(user)
   }
 }

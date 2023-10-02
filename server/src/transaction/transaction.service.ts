@@ -7,6 +7,7 @@ import { TransactionsResponse } from './types/transactionsResponse.interface'
 import { UserService } from '@app/user/user.service'
 import { addMoneyDto } from './dto/addMoney.dto'
 import { Decimal } from '@prisma/client/runtime/library'
+import { AddMoneyReponse } from '@app/user/types/addMoneyResponse'
 
 @Injectable()
 export class TransactionService {
@@ -34,13 +35,14 @@ export class TransactionService {
     return await client.transactions.create({ data: transaction })
   }
 
-  async addMoney(currentUserId: number, amount: addMoneyDto): Promise<Users> {
-    const user: { balance: Decimal } = await client.users.findFirst({ where: { id: currentUserId }, select: { balance: true } })
-    if (!user) {
+  async addMoney(currentUserId: number, amount: addMoneyDto): Promise<AddMoneyReponse> {
+    const currentUser: { balance: Decimal } = await client.users.findFirst({ where: { id: currentUserId }, select: { balance: true } })
+    if (!currentUser) {
       throw new HttpException('You are not authorized', HttpStatus.UNAUTHORIZED)
     }
-    const updatedUser: Users = await client.users.update({ where: { id: currentUserId }, data: { balance: user.balance.plus(amount.amount) } })
-    return updatedUser
+    const transaction: Transactions = await client.transactions.create({ data: { accepted: true, amount: new Decimal(amount.amount), commission: 0, message: '', createdAt: new Date(), totalAmount: new Decimal(amount.amount), receiverId: currentUserId, senderId: 0 } })
+    const user: Users = await client.users.update({ where: { id: currentUserId }, data: { balance: currentUser.balance.plus(amount.amount) } })
+    return { user, transaction }
   }
 
   async getTransactionsWithLimitOffset(currentUserId: number, limit: string = '20', offset: string = '0'): Promise<TransactionsResponse> {

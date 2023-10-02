@@ -24,6 +24,7 @@ const RegisterPage = () => {
       phoneNumber,
       password
     )
+
     if (axiosError instanceof AxiosError) {
       // if array
       if (
@@ -40,7 +41,7 @@ const RegisterPage = () => {
         setRequestErrors([...requestErrors, axiosError.response.data.message])
       }
     } else {
-      setRequestErrors([])
+      setRequestErrors(['The user is registred. Login please'])
     }
   }
 
@@ -160,7 +161,7 @@ const RegisterPage = () => {
             {requestErrors.length === 0 ? (
               <div>ㅤ</div>
             ) : (
-              <span className="text-center font-bold">{requestErrors}</span>
+              <span className={`text-center font-bold`}>{requestErrors}</span>
             )}
             <button
               type="submit"

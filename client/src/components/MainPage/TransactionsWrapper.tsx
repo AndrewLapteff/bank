@@ -1,12 +1,12 @@
 import Transactions from './Transactions/Transactions'
-import TransactionsDiagram from './Transactions/TransactionsDiagram'
+import Sidebar from './Transactions/Sidebar'
 
 const TransactionsWrapper = () => {
   return (
-    <div className="pt-5 w-full h-4/5 flex items-start justify-center gap-4">
+    <main className="flex h-4/5 w-full items-start justify-center gap-4 pt-5">
       <Transactions />
-      <TransactionsDiagram />
-    </div>
+      <Sidebar />
+    </main>
   )
 }
 
